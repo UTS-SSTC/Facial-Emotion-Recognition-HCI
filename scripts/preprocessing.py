@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """preprocess_affectnet.py
-A simple preprocessing script for an *aligned* AffectNet dataset.
+A simple preprocessing script for an *aligned* affectNet dataset.
 It can optionally rename files, resize/copy them to a clean directory
 and write CSV index files for each split (train/val/test).
 """
@@ -15,7 +15,7 @@ import pandas as pd
 from PIL import Image
 from tqdm import tqdm
 
-# Mapping AffectNet numeric labels → English class names
+# Mapping affectNet numeric labels → English class names
 LABEL_MAP: Dict[int, str] = {
     0: "anger",
     1: "disgust",
@@ -45,7 +45,7 @@ def rename_images(
     Parameters
     ----------
     root : Path
-        AffectNet root directory containing ``train``, ``val`` and ``test``.
+        affectNet root directory containing ``train``, ``val`` and ``test``.
     width : int, default 5
         Zero‑padding width for the per‑class running index.
     dry_run : bool, default True
@@ -127,7 +127,7 @@ def main() -> None:
     """CLI entry point."""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--affectnet_root", required=True, help="Path to AffectNet root")
+    parser.add_argument("--affectnet_root", required=True, help="Path to affectNet root")
     parser.add_argument("--processed_root", default=None, help="Output directory for processed data")
     parser.add_argument("--img_size", nargs=2, type=int, default=[224, 224], metavar=("W", "H"))
     parser.add_argument("--rename", type=lambda x: x.lower() == "true", default=True)

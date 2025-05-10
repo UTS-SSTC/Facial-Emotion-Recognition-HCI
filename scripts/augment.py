@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """augment_affectnet.py
-Augment under-represented expression classes in a processed AffectNet dataset.
+Augment under-represented expression classes in a processed affectNet dataset.
 
 The script copies original images to an augmented directory, then applies
 Albumentations transforms to balance each class up to a user-defined target.

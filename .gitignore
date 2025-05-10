@@ -1,9 +1,9 @@
 __pycache__
 /.idea
 /.vscode
-/Data/augmented/*
-!/Data/augmented/README.md
-/Data/processed/*
-!/Data/processed/README.md
-/Data/AffectNet/*
-!/Data/AffectNet/README.md
+/data/augmented/*
+!/data/augmented/README.md
+/data/processed/*
+!/data/processed/README.md
+/data/affectNet/*
+!/data/affectNet/README.md
