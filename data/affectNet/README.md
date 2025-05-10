@@ -1,4 +1,4 @@
-# AffectNet Dataset
+# affectNet dataset
 
 ## Download Link
 https://drive.google.com/file/d/1rfy3dM78YuIix0fiRs8blVRvlhZIUyzQ/view?usp=drive_link
