@@ -1,11 +1,4 @@
 #!/usr/bin/env python
-"""augment_affectnet.py
-Augment under-represented expression classes in a processed affectNet dataset.
-
-The script copies original images to an augmented directory, then applies
-Albumentations transforms to balance each class up to a user-defined target.
-"""
-
 from __future__ import annotations
 import argparse
 import random
@@ -23,9 +16,21 @@ SEVERITY_PARAMS = {
     'heavy': {'p_base': 0.7, 'bc_lim': 0.3, 'hue_lim': 15, 'sat_lim': 30, 'val_lim': 30, 'blur_lim': 7},
 }
 
-
 def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
-    """Return a list of Albumentations transforms based on severity level, including additional augmentations."""
+    """
+    Create a list of Albumentations augmentation pipelines based on severity.
+
+    Parameters
+    ----------
+    severity : {'light', 'medium', 'heavy'}, optional
+        Augmentation severity level (default is 'medium'). Controls the probability
+        and limits of each augmentation.
+
+    Returns
+    -------
+    List[A.Compose]
+        List of Albumentations Compose pipelines for image augmentation.
+    """
     params = SEVERITY_PARAMS[severity]
     p = params['p_base']
     bc = params['bc_lim']
@@ -34,8 +39,8 @@ def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
     val = params['val_lim']
     blur = params['blur_lim']
 
-    # Standard pipelines
-    pipelines = [
+    # Base augmentation pipelines
+    pipelines: List[A.Compose] = [
         A.Compose([
             A.RandomBrightnessContrast(brightness_limit=bc, contrast_limit=bc, p=p),
             A.HueSaturationValue(hue_shift_limit=hue, sat_shift_limit=sat, val_shift_limit=val, p=p),
@@ -45,7 +50,8 @@ def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
             A.GaussianBlur(blur_limit=blur, p=p),
         ]),
         A.Compose([
-            A.RandomShadow(shadow_roi=(0, 0, 1, 1), num_shadows_lower=1, num_shadows_upper=2, shadow_dimension=4, p=p),
+            A.RandomShadow(shadow_roi=(0, 0, 1, 1), num_shadows_lower=1, num_shadows_upper=2,
+                            shadow_dimension=4, p=p),
             A.RandomBrightnessContrast(brightness_limit=bc, contrast_limit=bc, p=p),
         ]),
         A.Compose([
@@ -54,35 +60,28 @@ def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
         ]),
     ]
 
-    # Additional pipelines for more diversity
+    # Additional augmentation pipelines for diversity
     pipelines.extend([
-        A.Compose([  # geometric augmentations
+        A.Compose([
             A.HorizontalFlip(p=p),
             A.RandomRotate90(p=p),
         ]),
-        A.Compose([  # contrast limited adaptive histogram equalization + dropout
+        A.Compose([
             A.CLAHE(clip_limit=4.0, p=p),
             A.CoarseDropout(max_holes=8, max_height=16, max_width=16, p=p),
         ]),
-        A.Compose([  # color space shifts
+        A.Compose([
             A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=p),
             A.ChannelShuffle(p=p * 0.5),
         ]),
-        A.Compose([  # motion blur
-            A.MotionBlur(blur_limit=7, p=p),
-        ]),
-        A.Compose([  # elastic transform
-            A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=p),
-        ]),
-        A.Compose([  # grid distortion
-            A.GridDistortion(num_steps=5, distort_limit=0.3, p=p),
-        ]),
-        A.Compose([  # random rain effect
-            A.RandomRain(drop_length=20, drop_width=1, drop_color=(200, 200, 200), blur_value=3, p=p),
-        ]),
+        A.Compose([A.MotionBlur(blur_limit=7, p=p)]),
+        A.Compose([A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=p)]),
+        A.Compose([A.GridDistortion(num_steps=5, distort_limit=0.3, p=p)]),
+        A.Compose([A.RandomRain(drop_length=20, drop_width=1, drop_color=(200, 200, 200), blur_value=3, p=p)]),
     ])
 
     return pipelines
+
 
 def augment_split(
     split_dir: Path,
@@ -91,21 +90,32 @@ def augment_split(
     severity: str,
     img_size: tuple[int, int] = (224, 224),
 ) -> pd.DataFrame:
-    """Augment images in a single data split and return a DataFrame index.
+    """
+    Augment images in a single data split and generate an index DataFrame.
 
-    Args:
-        split_dir: Path to the split directory (e.g., processed/train).
-        dst_root: Path to the destination augmented directory for this split.
-        target: Desired number of samples per class.
-        severity: Augmentation severity ('light', 'medium', 'heavy').
-        img_size: Tuple of (width, height) for resizing.
+    Parameters
+    ----------
+    split_dir : Path
+        Path to the processed split directory (e.g., processed/train).
+    dst_root : Path
+        Destination root for augmented images of this split.
+    target : int
+        Desired total number of samples per class (original + augmented).
+    severity : {'light', 'medium', 'heavy'}
+        Augmentation severity level.
+    img_size : tuple of int, optional
+        Output image size as (width, height), default (224, 224).
 
-    Returns:
-        DataFrame with columns ['file_name', 'file_path', 'expression'].
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ['file_name', 'file_path', 'expression']
+        listing all images (original and augmented) in this split.
     """
     transforms = create_augmentation_transforms(severity)
     records: list[dict[str, str]] = []
 
+    # Iterate through each expression class directory
     for expr_dir in sorted(split_dir.iterdir()):
         if not expr_dir.is_dir():
             continue
@@ -113,12 +123,14 @@ def augment_split(
         dst_expr = dst_root / expr
         dst_expr.mkdir(parents=True, exist_ok=True)
 
+        # Copy original images
         originals = list(expr_dir.glob('*.jpg'))
         for f in originals:
             dst = dst_expr / f.name
             dst.write_bytes(f.read_bytes())
             records.append({'file_name': f.name, 'file_path': str(dst), 'expression': expr})
 
+        # Determine how many augmented images are needed
         need = max(0, target - len(originals))
         for i in range(need):
             src = random.choice(originals)
@@ -135,8 +147,21 @@ def augment_split(
 
 
 def main() -> None:
-    """Parse CLI arguments and run augmentation for train/val/test splits."""
-    parser = argparse.ArgumentParser()
+    """
+    CLI entry point for dataset augmentation.
+
+    Parses arguments and performs augmentation on the train split,
+    copying val/test splits without augmentation.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    """
+    parser = argparse.ArgumentParser(description='Augment processed AffectNet splits')
     parser.add_argument(
         '--processed_root', required=True,
         help='Path to processed dataset root (contains train/val/test)'
@@ -165,7 +190,7 @@ def main() -> None:
 
     # Copy validation and test splits without augmentation
     for split in ('val', 'test'):
-        records = []
+        records: list[dict[str, str]] = []
         for expr_dir in (src_root / split).iterdir():
             if not expr_dir.is_dir():
                 continue

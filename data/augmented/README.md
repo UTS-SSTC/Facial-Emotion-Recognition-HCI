@@ -6,7 +6,7 @@ https://drive.google.com/file/d/1CjlwrZUdTECYW7W2NRtNwFLdOOqDTTV2/view?usp=drive
 ## File Structure
 
 ```
-Data/processed/
+data/processed/
 ├── train/
 │   ├── anger/    *.jpg
 │   ├── disgust/  *.jpg

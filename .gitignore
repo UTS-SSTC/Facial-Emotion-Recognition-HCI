@@ -5,5 +5,5 @@ __pycache__
 !/data/augmented/README.md
 /data/processed/*
 !/data/processed/README.md
-/data/affectNet/*
-!/data/affectNet/README.md
+/data/affectnet/*
+!/data/affectnet/README.md

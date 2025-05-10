@@ -1,4 +1,4 @@
-# affectNet dataset
+# affectnet dataset
 
 ## Download Link
 https://drive.google.com/file/d/1rfy3dM78YuIix0fiRs8blVRvlhZIUyzQ/view?usp=drive_link
@@ -6,7 +6,7 @@ https://drive.google.com/file/d/1rfy3dM78YuIix0fiRs8blVRvlhZIUyzQ/view?usp=drive
 ## File Structure
 
 ```
-Data/AffectNet/
+data/affectnet/
 ├── test/
 │   ├── 0/  *.jpg 
 │   ├── 1/  *.jpg

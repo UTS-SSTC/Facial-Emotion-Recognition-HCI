@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-"""preprocess_affectnet.py
-A simple preprocessing script for an *aligned* affectNet dataset.
-It can optionally rename files, resize/copy them to a clean directory
-and write CSV index files for each split (train/val/test).
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -15,7 +9,7 @@ import pandas as pd
 from PIL import Image
 from tqdm import tqdm
 
-# Mapping affectNet numeric labels → English class names
+# Mapping from numeric labels to expression names
 LABEL_MAP: Dict[int, str] = {
     0: "anger",
     1: "disgust",
@@ -40,21 +34,25 @@ def rename_images(
     dry_run: bool = True,
     out_csv: Optional[Path] = None,
 ) -> None:
-    """Rename images to ``<local_index>_<expr_name>.jpg`` inside each class.
+    """
+    Rename images to `<local_index>_<expression>.jpg` within each class folder.
 
     Parameters
     ----------
     root : Path
-        affectNet root directory containing ``train``, ``val`` and ``test``.
-    width : int, default 5
-        Zero‑padding width for the per‑class running index.
-    dry_run : bool, default True
-        If *True* no files are modified; a rename map is still produced when
-        *out_csv* is supplied.
-    out_csv : Path | None
-        File to store the rename map; ignored when *None*.
-    """
+        AffectNet root directory containing `train`, `val`, and `test` subfolders.
+    width : int, default=5
+        Zero-padding width for the per-class running index.
+    dry_run : bool, default=True
+        If True, no files are renamed on disk; CSV mapping is still generated if requested.
+    out_csv : Path or None, optional
+        Path to output CSV file recording old→new filenames.
+        If None, no CSV is written.
 
+    Returns
+    -------
+    None
+    """
     records: List[Dict[str, str | int]] = []
 
     for split in SPLITS:
@@ -62,7 +60,8 @@ def rename_images(
             src_dir = root / split / str(label)
             if not src_dir.exists():
                 continue
-            local_idx = 0  # restart counting for each expression class
+
+            local_idx = 0
             for file in sorted(src_dir.iterdir()):
                 if not file.is_file():
                     continue
@@ -70,6 +69,7 @@ def rename_images(
                 new_path = file.with_name(new_name)
                 if not dry_run:
                     file.rename(new_path)
+
                 records.append({
                     "old_path": str(file),
                     "new_path": str(new_path),
@@ -83,7 +83,10 @@ def rename_images(
         pd.DataFrame(records).to_csv(out_csv, index=False, encoding="utf-8-sig")
 
 
-# Copy & CSV utilities
+###############################################################################
+# Copy & resize utilities                                                     #
+###############################################################################
+
 def process_split(
     split: str,
     *,
@@ -91,55 +94,121 @@ def process_split(
     dst_root: Path,
     img_size: Tuple[int, int] = (224, 224),
 ) -> pd.DataFrame:
-    """Copy one split to *dst_root* and return an index DataFrame."""
+    """
+    Copy and resize images for one split, returning an index DataFrame.
 
+    Parameters
+    ----------
+    split : str
+        Name of the split to process ('train', 'val', or 'test').
+    src_root : Path
+        Root directory containing the original split folders (named by label).
+    dst_root : Path
+        Base directory where processed images will be saved; within it will be
+        subfolders for each split and expression.
+    img_size : tuple of int, default=(224, 224)
+        Target image size as (width, height).
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ['file_name', 'file_path', 'expression'], listing
+        every image saved under `dst_root/split/...`.
+    """
     records: List[Dict[str, str | int]] = []
 
     for label, expr_name in LABEL_MAP.items():
         src_dir = src_root / split / str(label)
         if not src_dir.exists():
             continue
+
         dst_dir = dst_root / split / expr_name
         dst_dir.mkdir(parents=True, exist_ok=True)
 
-        # Local index counter to keep destination file names unique per class
         local_idx = 0
         for file in tqdm(sorted(src_dir.iterdir()), desc=f"{split}/{expr_name}"):
             if not file.is_file():
                 continue
+
             dst_name = f"{local_idx:05d}_{expr_name}.jpg"
             dst_file = dst_dir / dst_name
+
             try:
                 img = Image.open(file).convert("RGB")
                 img.resize(img_size).save(dst_file)
-                records.append({
-                    "file_name": dst_name,
-                    "file_path": str(dst_file),
-                    "expression": expr_name,
-                })
-                local_idx += 1
             except Exception:
+                # Skip any files that cannot be opened or saved
                 continue
+
+            records.append({
+                "file_name": dst_name,
+                "file_path": str(dst_file),
+                "expression": expr_name,
+            })
+            local_idx += 1
+
     return pd.DataFrame(records)
 
-# Main entry
-def main() -> None:
-    """CLI entry point."""
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--affectnet_root", required=True, help="Path to affectNet root")
-    parser.add_argument("--processed_root", default=None, help="Output directory for processed data")
-    parser.add_argument("--img_size", nargs=2, type=int, default=[224, 224], metavar=("W", "H"))
-    parser.add_argument("--rename", type=lambda x: x.lower() == "true", default=True)
-    parser.add_argument("--width", type=int, default=5, help="Zero‑padding width for renaming")
-    parser.add_argument("--dry_run", type=lambda x: x.lower() == "true", default=False)
+###############################################################################
+# Main entry                                                                  #
+###############################################################################
+
+def main() -> None:
+    """
+    CLI entry point for preprocessing AffectNet.
+
+    Parses arguments to optionally rename images in-place, copy and resize
+    them into a new directory structure, and export CSV indexes.
+    """
+    parser = argparse.ArgumentParser(description="Preprocess AffectNet images")
+    parser.add_argument(
+        "--affectnet_root",
+        required=True,
+        help="Path to the AffectNet root directory"
+    )
+    parser.add_argument(
+        "--processed_root",
+        default=None,
+        help="Destination directory for processed data (default: sibling 'processed')"
+    )
+    parser.add_argument(
+        "--img_size",
+        nargs=2,
+        type=int,
+        default=[224, 224],
+        metavar=("W", "H"),
+        help="Resize images to this width and height"
+    )
+    parser.add_argument(
+        "--rename",
+        type=lambda x: x.lower() == "true",
+        default=True,
+        help="Whether to rename images in-place before processing"
+    )
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=5,
+        help="Zero-padding width for renaming"
+    )
+    parser.add_argument(
+        "--dry_run",
+        type=lambda x: x.lower() == "true",
+        default=False,
+        help="If true, simulate renaming without modifying files"
+    )
     args = parser.parse_args()
 
     src_root = Path(args.affectnet_root).resolve()
-    dst_root = Path(args.processed_root).resolve() if args.processed_root else src_root.parent / "processed"
+    dst_root = (
+        Path(args.processed_root).resolve()
+        if args.processed_root
+        else src_root.parent / "processed"
+    )
     dst_root.mkdir(parents=True, exist_ok=True)
 
-    # Optional in‑place renaming
+    # Rename images in-place if requested
     if args.rename:
         rename_images(
             root=src_root,
@@ -150,7 +219,7 @@ def main() -> None:
         if args.dry_run:
             return
 
-    # Copy into processed directory and export CSV files
+    # Copy, resize, and index each split
     for split in SPLITS:
         df_split = process_split(
             split=split,
