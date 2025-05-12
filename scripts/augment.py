@@ -18,19 +18,21 @@ SEVERITY_PARAMS = {
 
 def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
     """
-    Create a list of Albumentations augmentation pipelines based on severity.
+    Create a list of Albumentations augmentation pipelines based on the given severity level.
+    Compatible with Albumentations v2.0.6.
 
     Parameters
     ----------
     severity : {'light', 'medium', 'heavy'}, optional
-        Augmentation severity level (default is 'medium'). Controls the probability
-        and limits of each augmentation.
+        The intensity level of augmentation. Default is 'medium'.
+        Controls the probability and strength of transformations.
 
     Returns
     -------
-    List[A.Compose]
-        List of Albumentations Compose pipelines for image augmentation.
+    List[albumentations.Compose]
+        A list of composed Albumentations pipelines for image augmentation.
     """
+
     params = SEVERITY_PARAMS[severity]
     p = params['p_base']
     bc = params['bc_lim']
@@ -39,46 +41,49 @@ def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
     val = params['val_lim']
     blur = params['blur_lim']
 
-    # Base augmentation pipelines
     pipelines: List[A.Compose] = [
         A.Compose([
             A.RandomBrightnessContrast(brightness_limit=bc, contrast_limit=bc, p=p),
             A.HueSaturationValue(hue_shift_limit=hue, sat_shift_limit=sat, val_shift_limit=val, p=p),
         ]),
         A.Compose([
-            A.GaussNoise(var_limit=(5.0, 20.0), p=p),
             A.GaussianBlur(blur_limit=blur, p=p),
         ]),
         A.Compose([
-            A.RandomShadow(shadow_roi=(0, 0, 1, 1), num_shadows_lower=1, num_shadows_upper=2,
-                            shadow_dimension=4, p=p),
+            A.RandomShadow(shadow_roi=(0, 0, 1, 1), p=p),
             A.RandomBrightnessContrast(brightness_limit=bc, contrast_limit=bc, p=p),
         ]),
         A.Compose([
-            A.ImageCompression(quality_lower=80, quality_upper=99, p=p),
-            A.GaussNoise(var_limit=(5.0, 15.0), p=p * 0.5),
+            A.ImageCompression(compression_type='jpeg', p=p),
         ]),
-    ]
-
-    # Additional augmentation pipelines for diversity
-    pipelines.extend([
         A.Compose([
             A.HorizontalFlip(p=p),
             A.RandomRotate90(p=p),
         ]),
         A.Compose([
             A.CLAHE(clip_limit=4.0, p=p),
-            A.CoarseDropout(max_holes=8, max_height=16, max_width=16, p=p),
+            A.CoarseDropout(
+                p=p
+            )
+            ,
         ]),
         A.Compose([
             A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=p),
             A.ChannelShuffle(p=p * 0.5),
         ]),
         A.Compose([A.MotionBlur(blur_limit=7, p=p)]),
-        A.Compose([A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=p)]),
+        A.Compose([A.ElasticTransform(alpha=1, sigma=50, p=p)]),
         A.Compose([A.GridDistortion(num_steps=5, distort_limit=0.3, p=p)]),
-        A.Compose([A.RandomRain(drop_length=20, drop_width=1, drop_color=(200, 200, 200), blur_value=3, p=p)]),
-    ])
+        A.Compose([
+            A.RandomRain(
+                drop_length=20,
+                drop_width=1,
+                drop_color=(200, 200, 200),
+                blur_value=3,
+                p=p
+            )
+        ]),
+    ]
 
     return pipelines
 
@@ -128,7 +133,8 @@ def augment_split(
         for f in originals:
             dst = dst_expr / f.name
             dst.write_bytes(f.read_bytes())
-            records.append({'file_name': f.name, 'file_path': str(dst), 'expression': expr})
+            relative_path = dst.relative_to(dst_root)
+            records.append({'file_name': f.name, 'file_path': str(relative_path), 'expression': expr})
 
         # Determine how many augmented images are needed
         need = max(0, target - len(originals))
@@ -141,7 +147,8 @@ def augment_split(
             dst_name = f'aug_{i:05d}_{expr}.jpg'
             dst_file = dst_expr / dst_name
             cv2.imwrite(str(dst_file), aug_img)
-            records.append({'file_name': dst_name, 'file_path': str(dst_file), 'expression': expr})
+            relative_path = dst_file.relative_to(dst_root)
+            records.append({'file_name': dst_name, 'file_path': str(relative_path), 'expression': expr})
 
     return pd.DataFrame(records)
 
@@ -199,9 +206,76 @@ def main() -> None:
             for f in expr_dir.glob('*.jpg'):
                 dst = dst_expr / f.name
                 dst.write_bytes(f.read_bytes())
-                records.append({'file_name': f.name, 'file_path': str(dst), 'expression': expr_dir.name})
+                relative_path = dst.relative_to(dst_root)
+                records.append({'file_name': f.name, 'file_path': str(relative_path), 'expression': expr_dir.name})
         pd.DataFrame(records).to_csv(dst_root / f'{split}.csv', index=False)
 
+def augment_affectnet(
+    processed_root: str,
+    aug_root: str,
+    target: int = 8000,
+    severity: str = "medium"
+) -> dict[str, pd.DataFrame]:
+    """
+    Perform data augmentation on the training split of AffectNet.
+    Validation and test splits are copied without augmentation.
+    Outputs CSV metadata files and returns the metadata as dictionaries of DataFrames.
 
-if __name__ == '__main__':
-    main()
+    Parameters
+    ----------
+    processed_root : str
+        Path to the directory with preprocessed AffectNet dataset (must contain train/val/test folders).
+
+    aug_root : str
+        Destination path where augmented images and metadata will be saved.
+
+    target : int, optional
+        Target total number of images per class in the training split after augmentation. Default is 8000.
+
+    severity : {'light', 'medium', 'heavy'}, optional
+        Augmentation intensity level. Default is 'medium'.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        Dictionary containing DataFrames for each split: {'train': ..., 'val': ..., 'test': ...}
+        with columns ['file_name', 'file_path', 'expression'].
+    """
+
+    processed_root = Path(processed_root)
+    aug_root = Path(aug_root)
+    aug_root.mkdir(parents=True, exist_ok=True)
+
+    # Augment training split
+    df_train = augment_split(
+        split_dir=processed_root / "train",
+        dst_root=aug_root / "train",
+        target=target,
+        severity=severity
+    )
+    df_train.to_csv(aug_root / "train.csv", index=False)
+
+    result = {"train": df_train}
+
+    # Copy val/test splits without augmentation
+    for split in ("val", "test"):
+        records = []
+        for expr_dir in (processed_root / split).iterdir():
+            if not expr_dir.is_dir():
+                continue
+            dst_expr = aug_root / split / expr_dir.name
+            dst_expr.mkdir(parents=True, exist_ok=True)
+            for f in expr_dir.glob("*.jpg"):
+                dst = dst_expr / f.name
+                dst.write_bytes(f.read_bytes())
+                rel_path = dst.relative_to(aug_root)
+                records.append({
+                    "file_name": f.name,
+                    "file_path": str(rel_path),
+                    "expression": expr_dir.name
+                })
+        df_split = pd.DataFrame(records)
+        df_split.to_csv(aug_root / f"{split}.csv", index=False)
+        result[split] = df_split
+
+    return result

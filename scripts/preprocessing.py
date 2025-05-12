@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
-
 import pandas as pd
 from PIL import Image
 from tqdm import tqdm
@@ -140,11 +139,13 @@ def process_split(
                 # Skip any files that cannot be opened or saved
                 continue
 
+            relative_path = dst_file.relative_to(dst_root)
             records.append({
                 "file_name": dst_name,
-                "file_path": str(dst_file),
+                "file_path": str(relative_path),
                 "expression": expr_name,
             })
+
             local_idx += 1
 
     return pd.DataFrame(records)
@@ -229,6 +230,69 @@ def main() -> None:
         )
         df_split.to_csv(dst_root / f"{split}.csv", index=False)
 
+def process_affectnet(
+    affectnet_root: str,
+    processed_root: str,
+    img_size=(224, 224),
+    rename=True,
+    rename_width=5,
+    dry_run=False,
+) -> dict[str, pd.DataFrame]:
+    """
+    Preprocess the AffectNet dataset by optionally renaming and resizing images.
+    Generates structured CSV metadata for train, val, and test splits.
 
-if __name__ == "__main__":
-    main()
+    Parameters
+    ----------
+    affectnet_root : str
+        Path to the original AffectNet dataset containing 'train', 'val', and 'test' folders.
+
+    processed_root : str
+        Destination path where processed images and CSV metadata will be saved.
+
+    img_size : tuple of int, optional
+        Target image resolution as (width, height). Default is (224, 224).
+
+    rename : bool, optional
+        If True, images will be renamed to a consistent pattern per expression class. Default is True.
+
+    rename_width : int, optional
+        Zero-padding width for renamed images (e.g., 00001_happy.jpg). Default is 5.
+
+    dry_run : bool, optional
+        If True, only simulate renaming without making changes. Default is False.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        Dictionary containing DataFrames for each split: {'train': ..., 'val': ..., 'test': ...}
+        with columns ['file_name', 'file_path', 'expression'].
+    """
+    affectnet_root = Path(affectnet_root)
+    processed_root = Path(processed_root)
+    processed_root.mkdir(parents=True, exist_ok=True)
+
+    if rename:
+        rename_images(
+            root=affectnet_root,
+            width=rename_width,
+            dry_run=dry_run,
+            out_csv=processed_root / "rename_map.csv"
+        )
+        if dry_run:
+            return {}
+
+    result = {}
+    for split in ("train", "val", "test"):
+        df_split = process_split(
+            split=split,
+            src_root=affectnet_root,
+            dst_root=processed_root,
+            img_size=img_size
+        )
+        df_split.to_csv(processed_root / f"{split}.csv", index=False)
+        result[split] = df_split
+
+    return result
+
+
