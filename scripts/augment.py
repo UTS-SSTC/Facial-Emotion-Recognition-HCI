@@ -16,10 +16,6 @@ SEVERITY_PARAMS = {
     'heavy': {'p_base': 0.7, 'bc_lim': 0.3, 'hue_lim': 15, 'sat_lim': 30, 'val_lim': 30, 'blur_lim': 7},
 }
 
-from typing import List
-import albumentations as A
-
-
 def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
     """
     Create a list of Albumentations augmentation pipelines based on the given severity level.
