@@ -268,7 +268,6 @@ def process_affectnet(
         Dictionary containing DataFrames for each split: {'train': ..., 'val': ..., 'test': ...}
         with columns ['file_name', 'file_path', 'expression'].
     """
-    from pathlib import Path
     affectnet_root = Path(affectnet_root)
     processed_root = Path(processed_root)
     processed_root.mkdir(parents=True, exist_ok=True)
