@@ -173,20 +173,20 @@ def load_affectnet_data(
     train_loader = DataLoader(
         AffectNetDataset(train_df, transform=transforms['train']),
         batch_size=batch_size, shuffle=True,
-        num_workers=num_workers, pin_memory=True,
+        num_workers=num_workers, pin_memory=False,
         prefetch_factor=2, persistent_workers=True
     )
 
     val_loader = DataLoader(
         AffectNetDataset(val_df, transform=transforms['val']),
         batch_size=batch_size, shuffle=False,
-        num_workers=num_workers, pin_memory=True
+        num_workers=num_workers, pin_memory=False
     )
 
     test_loader = DataLoader(
         AffectNetDataset(test_df, transform=transforms['test']),
         batch_size=batch_size, shuffle=False,
-        num_workers=num_workers, pin_memory=True
+        num_workers=num_workers, pin_memory=False
     )
 
     return {
