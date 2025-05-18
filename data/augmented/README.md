@@ -1,7 +1,7 @@
 # Augmented Dataset
 
 ## Download Link
-https://drive.google.com/file/d/1qd0rpTVOACrdR4XBDTLrWRiRQdYa7ZL_/view?usp=sharing
+https://drive.google.com/file/d/1tjVTPD2vG3RPDax56jJq9wSsN0-Bl-1G/view?usp=drive_link
 
 ## File Structure
 
