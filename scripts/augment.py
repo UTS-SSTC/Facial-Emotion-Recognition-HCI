@@ -137,7 +137,7 @@ def augment_split(
             relative_path = dst.relative_to(data_dir).as_posix()
             records.append({
                 'file_name': f.name,
-                'file_path': f'./data/{relative_path}',  # ←★ 加前缀
+                'file_path': f'./data/{relative_path}',
                 'expression': expr
             })
 
@@ -155,7 +155,7 @@ def augment_split(
             relative_path = dst_file.relative_to(data_dir).as_posix()
             records.append({
                 'file_name': dst_name,
-                'file_path': f'./data/{relative_path}',  # ←★ 加前缀
+                'file_path': f'./data/{relative_path}',
                 'expression': expr
             })
 
@@ -276,10 +276,10 @@ def augment_affectnet(
             for f in expr_dir.glob("*.jpg"):
                 dst = dst_expr / f.name
                 dst.write_bytes(f.read_bytes())
-                rel_path = dst.relative_to(data_dir).as_posix()  # ←★ 改基准
+                rel_path = dst.relative_to(data_dir).as_posix()
                 records.append({
                     "file_name": f.name,
-                    "file_path": f"./data/{rel_path}",  # ←★ 加前缀
+                    "file_path": f"./data/{rel_path}",
                     "expression": expr_dir.name
                 })
         df_split = pd.DataFrame(records)
