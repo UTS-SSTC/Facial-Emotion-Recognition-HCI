@@ -69,9 +69,10 @@ def rename_images(
                 if not dry_run:
                     file.rename(new_path)
 
+                data_dir = root.parent
                 records.append({
-                    "old_path": str(file),
-                    "new_path": str(new_path),
+                    "old_path": f"./data/{file.relative_to(data_dir).as_posix()}",
+                    "new_path": f"./data/{new_path.relative_to(data_dir).as_posix()}",
                     "split": split,
                     "expression": expr_name,
                 })
@@ -139,10 +140,11 @@ def process_split(
                 # Skip any files that cannot be opened or saved
                 continue
 
-            relative_path = dst_file.relative_to(dst_root)
+            data_dir = dst_root.parent
+            relative_path = dst_file.relative_to(data_dir).as_posix()
             records.append({
                 "file_name": dst_name,
-                "file_path": str(relative_path),
+                "file_path": f"./data/{relative_path}",
                 "expression": expr_name,
             })
 
