@@ -119,6 +119,7 @@ def augment_split(
     """
     transforms = create_augmentation_transforms(severity)
     records: list[dict[str, str]] = []
+    data_dir = dst_root.parent
 
     # Iterate through each expression class directory
     for expr_dir in sorted(split_dir.iterdir()):
@@ -133,8 +134,12 @@ def augment_split(
         for f in originals:
             dst = dst_expr / f.name
             dst.write_bytes(f.read_bytes())
-            relative_path = dst.relative_to(dst_root)
-            records.append({'file_name': f.name, 'file_path': str(relative_path), 'expression': expr})
+            relative_path = dst.relative_to(data_dir).as_posix()
+            records.append({
+                'file_name': f.name,
+                'file_path': f'./data/{relative_path}',
+                'expression': expr
+            })
 
         # Determine how many augmented images are needed
         need = max(0, target - len(originals))
@@ -147,8 +152,12 @@ def augment_split(
             dst_name = f'aug_{i:05d}_{expr}.jpg'
             dst_file = dst_expr / dst_name
             cv2.imwrite(str(dst_file), aug_img)
-            relative_path = dst_file.relative_to(dst_root)
-            records.append({'file_name': dst_name, 'file_path': str(relative_path), 'expression': expr})
+            relative_path = dst_file.relative_to(data_dir).as_posix()
+            records.append({
+                'file_name': dst_name,
+                'file_path': f'./data/{relative_path}',
+                'expression': expr
+            })
 
     return pd.DataFrame(records)
 
@@ -241,11 +250,10 @@ def augment_affectnet(
         Dictionary containing DataFrames for each split: {'train': ..., 'val': ..., 'test': ...}
         with columns ['file_name', 'file_path', 'expression'].
     """
-
     processed_root = Path(processed_root)
     aug_root = Path(aug_root)
     aug_root.mkdir(parents=True, exist_ok=True)
-
+    data_dir = aug_root.parent
     # Augment training split
     df_train = augment_split(
         split_dir=processed_root / "train",
@@ -268,10 +276,10 @@ def augment_affectnet(
             for f in expr_dir.glob("*.jpg"):
                 dst = dst_expr / f.name
                 dst.write_bytes(f.read_bytes())
-                rel_path = dst.relative_to(aug_root)
+                rel_path = dst.relative_to(data_dir).as_posix()
                 records.append({
                     "file_name": f.name,
-                    "file_path": str(rel_path),
+                    "file_path": f"./data/{rel_path}",
                     "expression": expr_dir.name
                 })
         df_split = pd.DataFrame(records)
