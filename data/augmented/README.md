@@ -1,4 +1,4 @@
-# augmented dataset
+# Augmented Dataset
 
 ## Download Link
 https://drive.google.com/file/d/1wm0Km0dds_zF5cFpCxbYNZo0bEn-fIYA/view?usp=drive_link
