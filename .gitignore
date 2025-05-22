@@ -1,9 +1,12 @@
 __pycache__
 /.idea
 /.vscode
+/.DS_Store
+/data/.DS_Store
 /data/augmented/*
 !/data/augmented/README.md
 /data/processed/*
 !/data/processed/README.md
 /data/affectnet/*
 !/data/affectnet/README.md
+/models/*
