@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Image - Emotion Detection{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="text-center mb-4">
+            <h2>
+                <i class="fas fa-upload text-primary me-2"></i>
+                Upload Image for Emotion Detection
+            </h2>
+            <p class="text-muted">Select an image to detect emotions in faces</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Choose Image File</label>
+                                <input type="file" class="form-control" id="file" name="file" accept="image/*" required>
+                                <div class="form-text">
+                                    Supported formats: JPG, PNG, GIF, BMP (Max size: 16MB)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="model" class="form-label">Select Model</label>
+                                <select class="form-select" id="model" name="model">
+                                    {% for model in models %}
+                                    <option value="{{ model }}">{{ model }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i class="fas fa-upload me-2"></i>
+                            <span id="uploadText">Analyze Image</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center mb-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Processing...</span>
+            </div>
+            <p class="mt-2">Analyzing image for emotions...</p>
+        </div>
+
+        <!-- Results Section -->
+        {% if results %}
+        <div id="resultsSection" class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Detection Results
+                    {% if model_used %}
+                    <small class="text-muted">(Model: {{ model_used }})</small>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Image Display -->
+                    <div class="col-md-6">
+                        <h6>Uploaded Image</h6>
+                        <img src="data:image/jpeg;base64,{{ image }}" class="img-fluid rounded shadow-sm"
+                            alt="Uploaded image">
+                    </div>
+
+                    <!-- Results Display -->
+                    <div class="col-md-6">
+                        <h6>Detected Emotions</h6>
+                        {% if results %}
+                        {% for result in results %}
+                        <div class="card mb-3 border">
+                            <div class="card-header bg-light">
+                                <strong>Face {{ result.face_id + 1 }}</strong>
+                                <span class="badge bg-primary ms-2">{{ result.top_emotion|title }}</span>
+                            </div>
+                            <div class="card-body">
+                                <!-- Top Emotion -->
+                                <div class="mb-3">
+                                    <h6>Primary Emotion: {{ result.top_emotion|title }}</h6>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success"
+                                            style="width: {{ (result.emotions[result.top_emotion] * 100)|round(1) }}%">
+                                            {{ (result.emotions[result.top_emotion] * 100)|round(1) }}%
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- All Emotions -->
+                                <h6>All Emotions:</h6>
+                                {% for emotion, confidence in result.emotions.items() %}
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="emotion-label">{{ emotion|title }}</span>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress emotion-progress me-2">
+                                            <div class="progress-bar" style="width: {{ (confidence * 100)|round(1) }}%">
+                                            </div>
+                                        </div>
+                                        <span class="text-muted small">{{ (confidence * 100)|round(1) }}%</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+
+                                <!-- Bounding Box Info -->
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        Face location: ({{ result.bbox.x }}, {{ result.bbox.y }})
+                                        {{ result.bbox.w }}×{{ result.bbox.h }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No faces detected in the uploaded image.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- No Results Message -->
+        {% if results is defined and not results %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            No faces were detected in the uploaded image. Please try with a clearer image containing visible faces.
+        </div>
+        {% endif %}
+
+        <!-- Try Another Image -->
+        {% if results %}
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-primary" onclick="location.reload()">
+                <i class="fas fa-redo me-2"></i>Try Another Image
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+        // Show loading spinner
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('uploadBtn').disabled = true;
+        document.getElementById('uploadText').textContent = 'Processing...';
+
+        // Hide any existing results
+        const resultsSection = document.getElementById('resultsSection');
+        if (resultsSection) {
+            resultsSection.style.display = 'none';
+        }
+    });
+
+    // File input preview
+    document.getElementById('file').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Basic file validation
+            if (file.size > 16 * 1024 * 1024) {
+                alert('File size must be less than 16MB');
+                this.value = '';
+                return;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPG, PNG, GIF, BMP)');
+                this.value = '';
+                return;
+            }
+        }
+    });
+</script>
+{% endblock %}

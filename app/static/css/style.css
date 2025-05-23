@@ -1,0 +1,320 @@
+/* Custom CSS for Emotion Detection App */
+
+/* General Styles */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #e9ecef !important;
+}
+
+/* Cards */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+/* Emotion Badges */
+.emotion-badge {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.emotion-badge:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.emotion-badge i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.emotion-badge div {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Progress Bars */
+.emotion-progress {
+    width: 100px;
+    height: 0.5rem;
+}
+
+.emotion-label {
+    font-weight: 500;
+    text-transform: capitalize;
+    min-width: 80px;
+}
+
+/* Form Styles */
+.form-control:focus,
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Button Styles */
+.btn {
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-lg {
+    padding: 0.75rem 2rem;
+}
+
+/* Loading Spinner */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Video Stream */
+#videoStream {
+    border-radius: 0.5rem;
+    max-height: 500px;
+    width: auto;
+}
+
+#videoContainer {
+    display: inline-block;
+}
+
+/* Status Icons */
+.status-item {
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.status-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+/* Alert Styles */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.alert-info {
+    background-color: #e7f3ff;
+    color: #0c5460;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.alert-success {
+    background-color: #d1edff;
+    color: #0a3622;
+}
+
+/* Badge Styles */
+.badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Accordion Customization */
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(0, 123, 255, 0.25);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    color: #007bff;
+}
+
+/* Custom Colors */
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+.bg-light-blue {
+    background-color: #e3f2fd !important;
+}
+
+/* Image Upload Preview */
+.upload-preview {
+    max-height: 300px;
+    border-radius: 0.5rem;
+    border: 2px dashed #dee2e6;
+    padding: 1rem;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
+
+.upload-preview:hover {
+    border-color: #007bff;
+}
+
+.upload-preview.dragover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .emotion-badge {
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-lg {
+        padding: 0.5rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    #videoStream {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding: 0 0.5rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+
+    .emotion-progress {
+        width: 60px;
+    }
+
+    .status-item {
+        padding: 0.5rem;
+    }
+}
+
+/* Dark Mode Support (for future implementation) */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #ffffff;
+    }
+
+    .card {
+        background-color: #2d2d2d;
+        color: #ffffff;
+    }
+
+    .emotion-badge {
+        background-color: #3d3d3d;
+        border-color: #4d4d4d;
+        color: #ffffff;
+    }
+}
+
+/* Utility Classes */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.shadow-soft {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.border-soft {
+    border: 1px solid #e9ecef;
+}
+
+.rounded-lg {
+    border-radius: 0.75rem;
+}
+
+/* Animation Classes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
