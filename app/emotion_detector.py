@@ -170,15 +170,7 @@ class EmotionDetector:
             # Convert RGB to BGR for DeepFace
             image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             
-            # Detect faces using DeepFace
-            faces = DeepFace.extract_faces(
-                img_path=image_bgr,
-                target_size=(224, 224),
-                detector_backend='opencv',
-                enforce_detection=False
-            )
-            
-            # Get face regions with coordinates
+            # Use analyze instead of extract_faces for better compatibility
             face_objs = DeepFace.analyze(
                 img_path=image_bgr,
                 actions=['emotion'],
@@ -190,22 +182,29 @@ class EmotionDetector:
                 face_objs = [face_objs]
             
             detected_faces = []
-            for i, (face_img, face_obj) in enumerate(zip(faces, face_objs)):
-                # Convert face image back to RGB and to uint8
-                face_rgb = (face_img * 255).astype(np.uint8)
-                
+            for i, face_obj in enumerate(face_objs):
                 # Get bounding box coordinates
                 region = face_obj.get('region', {})
-                bbox = {
-                    'x': region.get('x', 0),
-                    'y': region.get('y', 0),
-                    'w': region.get('w', face_rgb.shape[1]),
-                    'h': region.get('h', face_rgb.shape[0])
-                }
+                x = region.get('x', 0)
+                y = region.get('y', 0)
+                w = region.get('w', 224)
+                h = region.get('h', 224)
+                
+                # Extract face region from original image
+                face_region = image[y:y+h, x:x+w]
+                
+                # Resize face to standard size if needed
+                if face_region.shape[0] > 0 and face_region.shape[1] > 0:
+                    face_resized = cv2.resize(face_region, (224, 224))
+                else:
+                    # Fallback: use the whole image if face region is invalid
+                    face_resized = cv2.resize(image, (224, 224))
+                
+                bbox = {'x': x, 'y': y, 'w': w, 'h': h}
                 
                 detected_faces.append({
                     'face_id': i,
-                    'image': face_rgb,
+                    'image': face_resized,
                     'bbox': bbox
                 })
             
@@ -213,7 +212,17 @@ class EmotionDetector:
             
         except Exception as e:
             print(f"[WARNING] Face detection failed: {e}")
-            return []
+            # Fallback: treat the whole image as a face
+            try:
+                face_resized = cv2.resize(image, (224, 224))
+                return [{
+                    'face_id': 0,
+                    'image': face_resized,
+                    'bbox': {'x': 0, 'y': 0, 'w': image.shape[1], 'h': image.shape[0]}
+                }]
+            except Exception as fallback_error:
+                print(f"[ERROR] Fallback face processing also failed: {fallback_error}")
+                return []
     
     def predict_emotion(self, face_image: np.ndarray) -> Dict[str, float]:
         """
