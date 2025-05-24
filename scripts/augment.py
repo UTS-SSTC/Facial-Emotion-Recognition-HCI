@@ -91,37 +91,14 @@ def create_augmentation_transforms(severity: str = 'medium') -> List[A.Compose]:
 def augment_split(
     split_dir: Path,
     dst_root: Path,
+    aug_root: Path,
     target: int,
     severity: str,
     img_size: tuple[int, int] = (224, 224),
 ) -> pd.DataFrame:
-    """
-    Augment images in a single data split and generate an index DataFrame.
-
-    Parameters
-    ----------
-    split_dir : Path
-        Path to the processed split directory (e.g., processed/train).
-    dst_root : Path
-        Destination root for augmented images of this split.
-    target : int
-        Desired total number of samples per class (original + augmented).
-    severity : {'light', 'medium', 'heavy'}
-        Augmentation severity level.
-    img_size : tuple of int, optional
-        Output image size as (width, height), default (224, 224).
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with columns ['file_name', 'file_path', 'expression']
-        listing all images (original and augmented) in this split.
-    """
     transforms = create_augmentation_transforms(severity)
     records: list[dict[str, str]] = []
-    data_dir = dst_root.parent
 
-    # Iterate through each expression class directory
     for expr_dir in sorted(split_dir.iterdir()):
         if not expr_dir.is_dir():
             continue
@@ -129,19 +106,17 @@ def augment_split(
         dst_expr = dst_root / expr
         dst_expr.mkdir(parents=True, exist_ok=True)
 
-        # Copy original images
         originals = list(expr_dir.glob('*.jpg'))
         for f in originals:
             dst = dst_expr / f.name
             dst.write_bytes(f.read_bytes())
-            relative_path = dst.relative_to(data_dir).as_posix()
+            relative_path = dst.relative_to(aug_root.parent).as_posix()
             records.append({
                 'file_name': f.name,
                 'file_path': f'./data/{relative_path}',
                 'expression': expr
             })
 
-        # Determine how many augmented images are needed
         need = max(0, target - len(originals))
         for i in range(need):
             src = random.choice(originals)
@@ -152,7 +127,7 @@ def augment_split(
             dst_name = f'aug_{i:05d}_{expr}.jpg'
             dst_file = dst_expr / dst_name
             cv2.imwrite(str(dst_file), aug_img)
-            relative_path = dst_file.relative_to(data_dir).as_posix()
+            relative_path = dst_file.relative_to(aug_root.parent).as_posix()
             records.append({
                 'file_name': dst_name,
                 'file_path': f'./data/{relative_path}',
@@ -160,7 +135,6 @@ def augment_split(
             })
 
     return pd.DataFrame(records)
-
 
 def main() -> None:
     """
@@ -225,47 +199,21 @@ def augment_affectnet(
     target: int = 8000,
     severity: str = "medium"
 ) -> dict[str, pd.DataFrame]:
-    """
-    Perform data augmentation on the training split of AffectNet.
-    Validation and test splits are copied without augmentation.
-    Outputs CSV metadata files and returns the metadata as dictionaries of DataFrames.
-
-    Parameters
-    ----------
-    processed_root : str
-        Path to the directory with preprocessed AffectNet dataset (must contain train/val/test folders).
-
-    aug_root : str
-        Destination path where augmented images and metadata will be saved.
-
-    target : int, optional
-        Target total number of images per class in the training split after augmentation. Default is 8000.
-
-    severity : {'light', 'medium', 'heavy'}, optional
-        Augmentation intensity level. Default is 'medium'.
-
-    Returns
-    -------
-    dict[str, pd.DataFrame]
-        Dictionary containing DataFrames for each split: {'train': ..., 'val': ..., 'test': ...}
-        with columns ['file_name', 'file_path', 'expression'].
-    """
     processed_root = Path(processed_root)
     aug_root = Path(aug_root)
     aug_root.mkdir(parents=True, exist_ok=True)
-    data_dir = aug_root.parent
-    # Augment training split
+    result = {}
+
     df_train = augment_split(
         split_dir=processed_root / "train",
         dst_root=aug_root / "train",
+        aug_root=aug_root,
         target=target,
         severity=severity
     )
     df_train.to_csv(aug_root / "train.csv", index=False)
+    result["train"] = df_train
 
-    result = {"train": df_train}
-
-    # Copy val/test splits without augmentation
     for split in ("val", "test"):
         records = []
         for expr_dir in (processed_root / split).iterdir():
@@ -276,7 +224,7 @@ def augment_affectnet(
             for f in expr_dir.glob("*.jpg"):
                 dst = dst_expr / f.name
                 dst.write_bytes(f.read_bytes())
-                rel_path = dst.relative_to(data_dir).as_posix()
+                rel_path = dst.relative_to(aug_root.parent).as_posix()
                 records.append({
                     "file_name": f.name,
                     "file_path": f"./data/{rel_path}",
