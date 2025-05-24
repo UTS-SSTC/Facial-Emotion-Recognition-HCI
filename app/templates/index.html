@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Emotion Detection Demo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Hero Section -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-brain text-primary"></i>
+                Emotion Detection Demo
+            </h1>
+            <p class="lead text-muted">
+                Detect emotions in real-time using advanced machine learning models.
+                Upload an image or use your camera for live emotion recognition.
+            </p>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-upload fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Upload Image</h5>
+                        <p class="card-text">
+                            Upload a photo to detect emotions in faces.
+                            Supports JPG, PNG, and other common image formats.
+                        </p>
+                        <a href="{{ url_for('upload_image') }}" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>Upload Image
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-video fa-3x text-success"></i>
+                        </div>
+                        <h5 class="card-title">Live Camera</h5>
+                        <p class="card-text">
+                            Use your webcam for real-time emotion detection.
+                            See emotions detected instantly on live video feed.
+                        </p>
+                        <a href="{{ url_for('camera') }}" class="btn btn-success">
+                            <i class="fas fa-video me-2"></i>Start Camera
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Information -->
+        <div class="card mt-5">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Available Models
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if models %}
+                <p>The following emotion detection models are available:</p>
+                <div class="row">
+                    {% for model in models %}
+                    <div class="col-md-6 mb-2">
+                        <div class="border rounded p-2">
+                            <i class="fas fa-robot text-info me-2"></i>
+                            <span class="fw-bold">{{ model }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No trained models found. Please ensure models are available in the models directory.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Emotion Classes -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-palette me-2"></i>Detectable Emotions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-angry text-danger"></i>
+                            <div>Anger</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-grimace text-warning"></i>
+                            <div>Disgust</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-frown text-primary"></i>
+                            <div>Fear</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-smile text-success"></i>
+                            <div>Happy</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-sad-tear text-info"></i>
+                            <div>Sad</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-surprise text-purple"></i>
+                            <div>Surprise</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-meh text-secondary"></i>
+                            <div>Neutral</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="emotion-badge">
+                            <i class="fas fa-smirk text-dark"></i>
+                            <div>Contempt</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>How to Use
+                </h5>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li><strong>Upload Image:</strong> Click "Upload Image" to select a photo from your device. The
+                        system will detect faces and predict emotions.</li>
+                    <li><strong>Live Camera:</strong> Click "Start Camera" to use your webcam for real-time emotion
+                        detection.</li>
+                    <li><strong>Model Selection:</strong> Choose different models on each page to compare performance.
+                    </li>
+                    <li><strong>Results:</strong> View detected emotions with confidence scores and bounding boxes
+                        around faces.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

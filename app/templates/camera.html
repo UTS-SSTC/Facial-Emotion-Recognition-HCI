@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Live Camera - Emotion Detection{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="text-center mb-4">
+            <h2>
+                <i class="fas fa-video text-success me-2"></i>
+                Live Camera Emotion Detection
+            </h2>
+            <p class="text-muted">Real-time emotion detection using your webcam</p>
+        </div>
+
+        <!-- Model Selection -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label for="modelSelect" class="form-label">Select Detection Model</label>
+                        <select class="form-select" id="modelSelect">
+                            {% for model in models %}
+                            <option value="{{ model }}">{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <div class="d-grid gap-2">
+                            <button id="startBtn" class="btn btn-success">
+                                <i class="fas fa-play me-2"></i>Start Camera
+                            </button>
+                            <button id="stopBtn" class="btn btn-danger" style="display: none;">
+                                <i class="fas fa-stop me-2"></i>Stop Camera
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Stream Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-camera me-2"></i>
+                    Live Stream
+                    <span id="statusBadge" class="badge bg-secondary ms-2">Stopped</span>
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <!-- Video Stream -->
+                <div id="videoContainer" class="position-relative" style="display: none;">
+                    <img id="videoStream" class="img-fluid rounded shadow" style="max-width: 100%; height: auto;"
+                        alt="Camera stream">
+
+                    <!-- Overlay Controls -->
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <div class="bg-dark bg-opacity-75 text-white rounded p-2">
+                            <small id="streamInfo">Model: <span id="currentModel">-</span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder when camera is off -->
+                <div id="cameraPlaceholder" class="py-5">
+                    <i class="fas fa-video-slash fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Camera Not Active</h5>
+                    <p class="text-muted">Click "Start Camera" to begin emotion detection</p>
+                </div>
+
+                <!-- Instructions -->
+                <div id="instructions" class="mt-4">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Instructions:</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="fas fa-check text-success me-2"></i>Position your face clearly in front of the
+                                camera</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Ensure good lighting for better detection
+                                accuracy</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Emotions will be detected and displayed in
+                                real-time</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Green boxes will appear around detected
+                                faces</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="status-item">
+                            <i id="cameraIcon" class="fas fa-video fa-2x text-muted"></i>
+                            <div class="mt-2">
+                                <strong>Camera</strong>
+                                <div id="cameraStatus" class="text-muted">Disconnected</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="status-item">
+                            <i id="modelIcon" class="fas fa-robot fa-2x text-muted"></i>
+                            <div class="mt-2">
+                                <strong>Model</strong>
+                                <div id="modelStatus" class="text-muted">Not Loaded</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="status-item">
+                            <i id="detectionIcon" class="fas fa-brain fa-2x text-muted"></i>
+                            <div class="mt-2">
+                                <strong>Detection</strong>
+                                <div id="detectionStatus" class="text-muted">Inactive</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-tools me-2"></i>Troubleshooting
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="troubleshootingAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#cameraIssues">
+                                Camera Not Working
+                            </button>
+                        </h2>
+                        <div id="cameraIssues" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li>Ensure your browser has camera permissions</li>
+                                    <li>Check if another application is using the camera</li>
+                                    <li>Try refreshing the page</li>
+                                    <li>Use HTTPS connection for camera access</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#detectionIssues">
+                                Poor Detection Results
+                            </button>
+                        </h2>
+                        <div id="detectionIssues" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li>Improve lighting conditions</li>
+                                    <li>Position face directly towards camera</li>
+                                    <li>Remove obstructions (sunglasses, masks)</li>
+                                    <li>Try different emotion expressions</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    class CameraController {
+        constructor() {
+            this.isStreaming = false;
+            this.streamImg = document.getElementById('videoStream');
+            this.startBtn = document.getElementById('startBtn');
+            this.stopBtn = document.getElementById('stopBtn');
+            this.modelSelect = document.getElementById('modelSelect');
+            this.statusBadge = document.getElementById('statusBadge');
+            this.videoContainer = document.getElementById('videoContainer');
+            this.placeholder = document.getElementById('cameraPlaceholder');
+
+            this.initializeEventListeners();
+            this.updateStatus('Stopped', 'secondary');
+        }
+
+        initializeEventListeners() {
+            this.startBtn.addEventListener('click', () => this.startCamera());
+            this.stopBtn.addEventListener('click', () => this.stopCamera());
+            this.modelSelect.addEventListener('change', () => this.switchModel());
+        }
+
+        startCamera() {
+            if (this.isStreaming) return;
+
+            const selectedModel = this.modelSelect.value;
+            if (!selectedModel) {
+                alert('Please select a model first');
+                return;
+            }
+
+            this.updateStatus('Starting...', 'warning');
+            this.startBtn.style.display = 'none';
+            this.stopBtn.style.display = 'block';
+            this.modelSelect.disabled = true;
+
+            // Start video stream
+            const streamUrl = `/video_feed?model=${encodeURIComponent(selectedModel)}`;
+            this.streamImg.src = streamUrl;
+
+            this.streamImg.onload = () => {
+                this.isStreaming = true;
+                this.videoContainer.style.display = 'block';
+                this.placeholder.style.display = 'none';
+                this.updateStatus('Active', 'success');
+                this.updateStatusIcons(true);
+                document.getElementById('currentModel').textContent = selectedModel;
+            };
+
+            this.streamImg.onerror = () => {
+                this.handleStreamError();
+            };
+        }
+
+        stopCamera() {
+            if (!this.isStreaming) return;
+
+            this.isStreaming = false;
+            this.streamImg.src = '';
+            this.videoContainer.style.display = 'none';
+            this.placeholder.style.display = 'block';
+            this.startBtn.style.display = 'block';
+            this.stopBtn.style.display = 'none';
+            this.modelSelect.disabled = false;
+
+            this.updateStatus('Stopped', 'secondary');
+            this.updateStatusIcons(false);
+        }
+
+        switchModel() {
+            if (this.isStreaming) {
+                // Restart with new model
+                this.stopCamera();
+                setTimeout(() => this.startCamera(), 500);
+            }
+        }
+
+        handleStreamError() {
+            this.updateStatus('Error', 'danger');
+            this.stopCamera();
+            alert('Failed to start camera stream. Please check camera permissions and try again.');
+        }
+
+        updateStatus(text, type) {
+            this.statusBadge.textContent = text;
+            this.statusBadge.className = `badge bg-${type} ms-2`;
+        }
+
+        updateStatusIcons(active) {
+            const cameraIcon = document.getElementById('cameraIcon');
+            const modelIcon = document.getElementById('modelIcon');
+            const detectionIcon = document.getElementById('detectionIcon');
+            const cameraStatus = document.getElementById('cameraStatus');
+            const modelStatus = document.getElementById('modelStatus');
+            const detectionStatus = document.getElementById('detectionStatus');
+
+            if (active) {
+                cameraIcon.className = 'fas fa-video fa-2x text-success';
+                modelIcon.className = 'fas fa-robot fa-2x text-success';
+                detectionIcon.className = 'fas fa-brain fa-2x text-success';
+                cameraStatus.textContent = 'Connected';
+                cameraStatus.className = 'text-success';
+                modelStatus.textContent = 'Loaded';
+                modelStatus.className = 'text-success';
+                detectionStatus.textContent = 'Active';
+                detectionStatus.className = 'text-success';
+            } else {
+                cameraIcon.className = 'fas fa-video fa-2x text-muted';
+                modelIcon.className = 'fas fa-robot fa-2x text-muted';
+                detectionIcon.className = 'fas fa-brain fa-2x text-muted';
+                cameraStatus.textContent = 'Disconnected';
+                cameraStatus.className = 'text-muted';
+                modelStatus.textContent = 'Not Loaded';
+                modelStatus.className = 'text-muted';
+                detectionStatus.textContent = 'Inactive';
+                detectionStatus.className = 'text-muted';
+            }
+        }
+    }
+
+    // Initialize camera controller when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        new CameraController();
+    });
+
+    // Handle page visibility changes to stop camera when tab is hidden
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden && window.cameraController && window.cameraController.isStreaming) {
+            // Optionally pause stream when tab is hidden
+            console.log('Tab hidden, camera stream continues...');
+        }
+    });
+</script>
+{% endblock %}
