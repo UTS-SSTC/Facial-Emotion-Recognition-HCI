@@ -401,7 +401,7 @@ window.EmotionApp = {
             sad: "fas fa-sad-tear",
             surprise: "fas fa-surprise",
             neutral: "fas fa-meh",
-            contempt: "fas fa-smirk",
+            contempt: "fas fa-grin-squint",
         };
         return icons[emotion.toLowerCase()] || "fas fa-question";
     },
