@@ -318,3 +318,89 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* 上传图片显示样式 */
+.uploaded-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    max-height: 600px;
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.uploaded-image {
+    max-width: 100%;
+    min-width: 300px;
+    min-height: 300px;
+    max-height: 500px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.uploaded-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* 文件预览图片样式 */
+.preview-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    max-height: 300px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+}
+
+.preview-image {
+    max-width: 100%;
+    min-width: 150px;
+    min-height: 150px;
+    max-height: 250px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.preview-image:hover {
+    transform: scale(1.05);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .uploaded-image-container {
+        min-height: 250px;
+        max-height: 400px;
+    }
+
+    .uploaded-image {
+        min-width: 200px;
+        min-height: 200px;
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 576px) {
+    .uploaded-image-container {
+        min-height: 200px;
+        max-height: 300px;
+    }
+
+    .uploaded-image {
+        min-width: 150px;
+        min-height: 150px;
+        max-height: 250px;
+    }
+}

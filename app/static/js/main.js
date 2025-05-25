@@ -264,8 +264,11 @@ window.EmotionApp = {
         const reader = new FileReader();
         reader.onload = function (e) {
             previewContainer.innerHTML = `
-                <img src="${e.target.result}" class="img-fluid rounded" 
-                     style="max-height: 200px;" alt="Preview">
+                <div class="preview-image-container">
+                    <img src="${
+                        e.target.result
+                    }" class="preview-image rounded" alt="Preview">
+                </div>
                 <div class="mt-2">
                     <small class="text-muted">${
                         file.name
