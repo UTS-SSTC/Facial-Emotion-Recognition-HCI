@@ -8,6 +8,7 @@ import time
 from typing import Dict, List, Optional
 from torch.utils.data import DataLoader
 from transformers import DeiTModel
+from transformers import AutoConfig, AutoModel 
 import lightgbm as lgb
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import matplotlib.pyplot as plt
@@ -512,12 +513,18 @@ class HybridEmotionClassifier:
         self.classifier.load_model(model_path)
 
         # Load fine-tuned DeiT model if available
-        backbone_path = os.path.join(directory, "backbone")
+        backbone_path = os.path.join(directory, "deit_model")      # 保持旧目录名也行
         if os.path.exists(backbone_path):
-            print(f"[INFO] Loading fine-tuned model from {backbone_path}")
-            self.feature_extractor.model = DeiTModel.from_pretrained(backbone_path)
-            self.feature_extractor.model = self.feature_extractor.model.to(self.feature_extractor.device)
-            self.feature_extractor.model.eval()
+            cfg = AutoConfig.from_pretrained(backbone_path)
+            print(f"[INFO] Loading fine-tuned {cfg.model_type.upper()} backbone "
+                  f"from {backbone_path}")
+    
+            self.feature_extractor.model = AutoModel.from_pretrained(
+                backbone_path,
+                config=cfg,
+                ignore_mismatched_sizes=True
+            ).to(self.feature_extractor.device).eval()
+    
             self.feature_extractor.is_finetuned = True
 
         # Load class names if available
@@ -530,3 +537,49 @@ class HybridEmotionClassifier:
         self.is_trained = True
 
         print(f"[INFO] Model loaded from {directory}")
+        # """
+        # Load a trained model.
+
+        # Parameters
+        # ----------
+        # directory : str
+        #     Directory to load the model from.
+        # """
+        # # Load model info
+        # model_info_path = os.path.join(directory, "model_info.json")
+        # if os.path.exists(model_info_path):
+        #     with open(model_info_path, 'r') as f:
+        #         model_info = json.load(f)
+
+        #     # Initialize feature extractor with saved parameters if needed
+        #     if hasattr(self.feature_extractor, 'model_name') and self.feature_extractor.model_name != model_info.get(
+        #             'model_name'):
+        #         print(f"[WARNING] Current feature extractor model_name ({self.feature_extractor.model_name}) "
+        #               f"differs from saved model_name ({model_info.get('model_name')})")
+
+        # # Load LightGBM model
+        # model_path = os.path.join(directory, "lightgbm_model.txt")
+        # if not os.path.exists(model_path):
+        #     raise FileNotFoundError(f"Model file not found at {model_path}")
+
+        # self.classifier.load_model(model_path)
+
+        # # Load fine-tuned DeiT model if available
+        # backbone_path = os.path.join(directory, "deit_model")
+        # if os.path.exists(backbone_path):
+        #     print(f"[INFO] Loading fine-tuned model from {backbone_path}")
+        #     self.feature_extractor.model = DeiTModel.from_pretrained(backbone_path)
+        #     self.feature_extractor.model = self.feature_extractor.model.to(self.feature_extractor.device)
+        #     self.feature_extractor.model.eval()
+        #     self.feature_extractor.is_finetuned = True
+
+        # # Load class names if available
+        # class_names_path = os.path.join(directory, "class_names.txt")
+        # if os.path.exists(class_names_path):
+        #     with open(class_names_path, 'r') as f:
+        #         self.class_names = [line.strip() for line in f]
+
+        # self.num_classes = self.classifier.params['num_class']
+        # self.is_trained = True
+
+        # print(f"[INFO] Model loaded from {directory}")

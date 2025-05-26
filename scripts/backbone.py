@@ -280,8 +280,11 @@ class VisionFeatureExtractor:
                 out = self.model(images)
 
                 # Transformer series model: pooler_output
-                if hasattr(out, 'pooler_output'):
+                if hasattr(out, 'pooler_output') and out.pooler_output is not None:
                     feat = out.pooler_output  # (B, hidden_size)
+
+                elif hasattr(out, "last_hidden_state") and out.last_hidden_state.ndim == 3:
+                    feat = out.last_hidden_state[:, 0, :]   
 
                 # There is last_hidden_state and it is 4D (usually ViT)
                 elif hasattr(out, 'last_hidden_state') and out.last_hidden_state.ndim == 4:
