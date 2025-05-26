@@ -132,18 +132,19 @@ class EmotionDetector:
             else:
                 model_name = 'facebook/deit-base-distilled-patch16-224'
             
-            # Initialize components
-            feature_extractor = VisionFeatureExtractor(
+            # Initialize backbone using the updated method
+            backbone = VisionFeatureExtractor(
                 model_name=model_name,
                 device=self.device
             )
             
-            # Create and load hybrid model
-            self.model = HybridEmotionClassifier(
-                feature_extractor=feature_extractor,
-                num_classes=len(self.emotion_classes)
-            )
+            # Create hybrid model using the updated method
+            self.model = HybridEmotionClassifier(backbone)
+            
+            # Load the trained model
             self.model.load(model_path)
+            
+            # Set class names
             self.model.class_names = self.emotion_classes
             
             print(f"[INFO] Model loaded successfully from {model_path}")
